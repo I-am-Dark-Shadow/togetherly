@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-cinematic text-slate-200 min-h-screen selection:bg-accent selection:text-white antialiased;
+
+    /* 
+      Apply the custom GIF cursor globally. 
+      The '0 0' represents the X Y hotspot coordinates (top-left). 
+      If your cursor's "tip" is in the center of the image, adjust this to '16 16' (for a 32x32 image).
+      'auto' is the mandatory browser fallback if the image fails to load.
+    */
+    cursor: url('/custom-cursor.gif') 0 0, auto;
+  }
+
+  /* Usability: Ensure text inputs use the standard text-selection I-beam */
+  input,
+  textarea {
+    cursor: text;
+  }
+
+  /* Usability: Ensure interactive elements use the standard pointing hand */
+  button,
+  a,
+  select,
+  [role="button"] {
+    cursor: pointer;
+  }
+
+  /* Accessibility: Disable the custom animated GIF cursor for users who prefer reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    body {
+      cursor: auto;
+    }
+  }
+}
+
+/* Global Custom Scrollbar Polish */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(5, 3, 20, 1);
+  /* Matches bg-cinematic */
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-700/50 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary/60;
+}
+
+/* 
+  Allows specific components (like Chat) to use a thinner scrollbar 
+  while the rest of the app uses the global one above 
+*/
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
