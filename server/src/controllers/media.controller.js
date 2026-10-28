@@ -1,10 +1,46 @@
+import fs from 'fs';
 import Media from '../models/Media.js';
 import User from '../models/User.js';
+import { driveService } from '../config/googleDrive.js';
 
-// Admin Upload
+// তোমার গুগল ড্রাইভের ফোল্ডার ID এখানে দাও
+const DRIVE_FOLDER_ID = '18pV7X_NcBZtnzSroxW7Hk9mk-qT9cabl';
+
+const uploadToDrive = async (filePath, mimeType, fileName) => {
+    try {
+        const response = await driveService.files.create({
+            requestBody: {
+                name: fileName,
+                parents: [DRIVE_FOLDER_ID],
+            },
+            media: {
+                mimeType: mimeType,
+                body: fs.createReadStream(filePath),
+            },
+            fields: 'id',
+        });
+
+        const fileId = response.data.id;
+
+        // ফাইলটিকে Public করা যাতে ফ্রন্টএন্ডে স্ট্রিম করা যায়
+        await driveService.permissions.create({
+            fileId: fileId,
+            requestBody: {
+                role: 'reader',
+                type: 'anyone',
+            },
+        });
+
+        // ডিরেক্ট ডাউনলোড/স্ট্রিমিং URL তৈরি
+        return `https://drive.google.com/uc?export=download&id=${fileId}`;
+    } catch (error) {
+        console.error('Drive Upload Error:', error);
+        throw error;
+    }
+};
+
 export const uploadMedia = async (req, res) => {
     try {
-        // Security check: Only 'suvro' is Admin
         if (req.user.username !== 'suvro') {
             return res.status(403).json({ message: 'Only Admin (suvro) can upload media' });
         }
@@ -15,26 +51,38 @@ export const uploadMedia = async (req, res) => {
             return res.status(400).json({ message: 'Please upload both media file and thumbnail' });
         }
 
-        // Convert local file paths to server URLs
-        const mediaUrl = `/${req.files.mediaFile[0].path.replace(/\\/g, '/')}`;
-        const thumbnailUrl = `/${req.files.thumbnail[0].path.replace(/\\/g, '/')}`;
+        // ড্রাইভে আপলোড করা হচ্ছে
+        const mediaUrl = await uploadToDrive(
+            req.files.mediaFile[0].path,
+            req.files.mediaFile[0].mimetype,
+            req.files.mediaFile[0].originalname
+        );
+
+        const thumbnailUrl = await uploadToDrive(
+            req.files.thumbnail[0].path,
+            req.files.thumbnail[0].mimetype,
+            req.files.thumbnail[0].originalname
+        );
+
+        // আপলোড শেষ হলে লোকাল সার্ভার থেকে টেম্পোরারি ফাইলগুলো মুছে ফেলা
+        fs.unlinkSync(req.files.mediaFile[0].path);
+        fs.unlinkSync(req.files.thumbnail[0].path);
 
         const newMedia = await Media.create({
             title,
             type,
-            mediaUrl,
-            thumbnailUrl,
+            mediaUrl, // এটি এখন Google Drive এর ডিরেক্ট লিংক
+            thumbnailUrl, // এটিও Google Drive এর ডিরেক্ট লিংক
             uploadedBy: req.user._id
         });
 
-        res.status(201).json({ message: 'Upload successful!', media: newMedia });
+        res.status(201).json({ message: 'Uploaded to Google Drive successfully!', media: newMedia });
     } catch (error) {
         console.error(`[Upload Error]: ${error.message}`);
-        res.status(500).json({ message: 'Failed to upload media' });
+        res.status(500).json({ message: 'Failed to upload media to Drive' });
     }
 };
 
-// Fetch All Media
 export const getAllMedia = async (req, res) => {
     try {
         const media = await Media.find().sort({ createdAt: -1 });
@@ -44,7 +92,6 @@ export const getAllMedia = async (req, res) => {
     }
 };
 
-// Toggle Favorites
 export const toggleFavorite = async (req, res) => {
     try {
         const { mediaId } = req.body;

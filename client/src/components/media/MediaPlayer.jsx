@@ -6,7 +6,7 @@ import { useSocket } from '../../hooks/useSocket';
 
 export function MediaPlayer({ url, roomId, initialMediaState, onEnded }) {
 
-    const fullUrl = url?.startsWith('/') ? import.meta.env.VITE_API_URL + url : url;
+    // const fullUrl = url?.startsWith('/') ? import.meta.env.VITE_API_URL + url : url;
     const { socket } = useSocket();
     const playerRef = useRef(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -106,7 +106,7 @@ export function MediaPlayer({ url, roomId, initialMediaState, onEnded }) {
             <ReactPlayer
                 ref={playerRef}
                 className="absolute top-0 left-0"
-                url={fullUrl}
+                url={url}
                 width="100%"
                 height="100%"
                 controls={true}

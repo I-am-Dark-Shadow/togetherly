@@ -3,14 +3,14 @@ import { cn } from '../../lib/utils';
 import { axiosInstance } from '../../lib/axios';
 
 export function MediaCard({ media, onPlay, isFavorite, onToggleFavorite }) {
-    const getFullUrl = (path) => path?.startsWith('/') ? import.meta.env.VITE_API_URL + path : path;
+    // const getFullUrl = (path) => path?.startsWith('/') ? import.meta.env.VITE_API_URL + path : path;
 
     return (
         <div className="group relative rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(99,102,241,0.5)] bg-black/40 border border-glassBorder shrink-0 w-64">
             {/* Thumbnail */}
             <div className="aspect-video w-full overflow-hidden relative">
                 <img
-                    src={getFullUrl(media.thumbnailUrl)}
+                    src={media.thumbnailUrl}
                     alt={media.title}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
